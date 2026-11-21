@@ -41,7 +41,7 @@ NIDS-LAB/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/NIDS-LAB.git
+git clone https://github.com/RemanSec/NIDS-LAB.git
 cd NIDS-LAB
 ```
 
