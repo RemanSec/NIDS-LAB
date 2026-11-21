@@ -102,7 +102,7 @@ The objective of NIDS-LAB is to explore network security, packet analysis, and i
 This project is intended for educational and authorized cybersecurity testing. Only analyze network traffic that you own or have permission to inspect.
 
 ## Author
-
+ ALEX402
 Developed as a practical cybersecurity and network security project.
 
 **Project:** NIDS-LAB  
