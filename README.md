@@ -34,7 +34,6 @@ NIDS-LAB/
 ├── static/
 │   └── style.css
 ├── data/
-└── uploads/
 ```
 
 ## Installation and Setup
