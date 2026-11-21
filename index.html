@@ -1,0 +1,505 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIDS Lab | Network Security Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">N</div>
+            <div>
+                <h2>NIDS <span>LAB</span></h2>
+                <p>NETWORK SECURITY</p>
+            </div>
+        </div>
+
+        <nav class="navigation">
+            <a href="{{ url_for('index') }}" class="nav-link active">
+                <span>▦</span> Dashboard
+            </a>
+
+            <a href="{{ url_for('index') }}#upload" class="nav-link">
+                <span>⇧</span> Analyze PCAP
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="system-status">
+                <span class="status-dot"></span>
+                Offline Analysis Mode
+            </div>
+            <p>NIDS Lab v1.0</p>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">SECURITY OPERATIONS CENTER</p>
+
+                <h1>
+                    {% if detail_view %}
+                        Analysis Details
+                    {% else %}
+                        Network Security Dashboard
+                    {% endif %}
+                </h1>
+            </div>
+
+            <div class="topbar-right">
+                <span class="live-indicator"></span>
+                SYSTEM READY
+            </div>
+        </header>
+
+
+        <section class="content">
+
+            <!-- FLASH MESSAGES -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash-message">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+
+            {% if detail_view %}
+
+                <!-- ANALYSIS DETAILS -->
+
+                <div class="page-heading">
+                    <div>
+                        <h2>{{ analysis.filename }}</h2>
+                        <p>Network capture analysis report</p>
+                    </div>
+
+                    <a href="{{ url_for('index') }}" class="secondary-button">
+                        ← Back to Dashboard
+                    </a>
+                </div>
+
+
+                <!-- ANALYSIS STATISTICS -->
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+                        <p>Total Packets</p>
+                        <h2>{{ analysis.packet_count }}</h2>
+                        <span>Packets analyzed</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <p>Security Alerts</p>
+                        <h2>{{ analysis.alert_count }}</h2>
+                        <span>Detection indicators</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <p>Protocols</p>
+                        <h2>{{ protocol_counts|length }}</h2>
+                        <span>Protocol types detected</span>
+                    </div>
+
+                </div>
+
+
+                <!-- PROTOCOL DISTRIBUTION -->
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Protocol Distribution</h3>
+                            <p>Protocols identified in this capture</p>
+                        </div>
+                    </div>
+
+                    {% for item in protocol_counts %}
+                        <div class="protocol-row">
+                            <span>{{ item.protocol }}</span>
+                            <strong>{{ item.count }}</strong>
+                        </div>
+                    {% else %}
+                        <p class="empty-state">No protocol data available.</p>
+                    {% endfor %}
+
+                </section>
+
+
+                <!-- SECURITY ALERTS -->
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Detected Security Alerts</h3>
+                            <p>Suspicious network activity indicators</p>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Severity</th>
+                                    <th>Source IP</th>
+                                    <th>Detection Rule</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for alert in alerts %}
+                                    <tr>
+                                        <td>
+                                            <span class="severity {{ alert.severity|lower }}">
+                                                {{ alert.severity }}
+                                            </span>
+                                        </td>
+                                        <td>{{ alert.source_ip }}</td>
+                                        <td>{{ alert.rule }}</td>
+                                        <td>{{ alert.details }}</td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="empty-state">
+                                            No security alerts detected.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </section>
+
+
+                <!-- PACKET EVENTS -->
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Network Packet Events</h3>
+                            <p>Recorded packets from the uploaded capture</p>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Source IP</th>
+                                    <th>Destination IP</th>
+                                    <th>Protocol</th>
+                                    <th>Source Port</th>
+                                    <th>Destination Port</th>
+                                    <th>Size</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for event in events %}
+                                    <tr>
+                                        <td>{{ event.src_ip }}</td>
+                                        <td>{{ event.dst_ip }}</td>
+                                        <td>
+                                            <span class="protocol-tag">
+                                                {{ event.protocol }}
+                                            </span>
+                                        </td>
+                                        <td>{{ event.src_port or '-' }}</td>
+                                        <td>{{ event.dst_port or '-' }}</td>
+                                        <td>{{ event.size }} bytes</td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="empty-state">
+                                            No packet events available.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </section>
+
+
+            {% else %}
+
+                <!-- DASHBOARD OVERVIEW -->
+
+                <div class="welcome-section">
+                    <div>
+                        <h2>Network Overview</h2>
+                        <p>
+                            Monitor network traffic, analyze packet captures
+                            and identify suspicious activity.
+                        </p>
+                    </div>
+
+                    <div class="date-label">
+                        NIDS MONITORING
+                    </div>
+                </div>
+
+
+                <!-- DASHBOARD STATISTICS -->
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span>ANALYSES</span>
+                            <span class="stat-icon blue">▦</span>
+                        </div>
+
+                        <h2>{{ total_analyses }}</h2>
+                        <p>Total PCAP files analyzed</p>
+                    </div>
+
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span>PACKETS</span>
+                            <span class="stat-icon purple">⌁</span>
+                        </div>
+
+                        <h2>{{ total_packets }}</h2>
+                        <p>Network packets processed</p>
+                    </div>
+
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span>ALERTS</span>
+                            <span class="stat-icon red">⚠</span>
+                        </div>
+
+                        <h2>{{ total_alerts }}</h2>
+                        <p>Security indicators detected</p>
+                    </div>
+
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span>PROTOCOLS</span>
+                            <span class="stat-icon green">◎</span>
+                        </div>
+
+                        <h2>{{ protocol_counts|length }}</h2>
+                        <p>Protocol types observed</p>
+                    </div>
+
+                </div>
+
+
+                <!-- PCAP UPLOAD -->
+                <section class="panel upload-panel" id="upload">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Upload Network Capture</h3>
+                            <p>Upload a PCAP or PCAPNG file for analysis.</p>
+                        </div>
+                    </div>
+
+                    <div class="upload-area">
+
+                        <div class="upload-icon">⇧</div>
+
+                        <h3>Analyze Network Traffic</h3>
+
+                        <p>
+                            Select a network capture file from your computer.
+                        </p>
+
+                        <form
+                            action="{{ url_for('upload') }}"
+                            method="POST"
+                            enctype="multipart/form-data"
+                        >
+
+                            <input
+                                type="file"
+                                name="pcap_file"
+                                accept=".pcap,.pcapng"
+                                required
+                            >
+
+                            <button type="submit" class="primary-button">
+                                Analyze PCAP File
+                            </button>
+
+                        </form>
+
+                        <p style="margin-top: 15px;">
+                            Supported formats: PCAP, PCAPNG | Maximum size: 20 MB
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+                <!-- RECENT SECURITY ALERTS -->
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Recent Security Alerts</h3>
+                            <p>Latest detected suspicious activities</p>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Severity</th>
+                                    <th>Source IP</th>
+                                    <th>Detection Rule</th>
+                                    <th>Details</th>
+                                    <th>File</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for alert in recent_alerts %}
+                                    <tr>
+                                        <td>
+                                            <span class="severity {{ alert.severity|lower }}">
+                                                {{ alert.severity }}
+                                            </span>
+                                        </td>
+
+                                        <td>{{ alert.source_ip }}</td>
+                                        <td>{{ alert.rule }}</td>
+                                        <td>{{ alert.details }}</td>
+                                        <td>{{ alert.filename }}</td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="empty-state">
+                                            No alerts available yet.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </section>
+
+
+                <!-- PROTOCOL DISTRIBUTION -->
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Protocol Distribution</h3>
+                            <p>Network protocols identified across analyses</p>
+                        </div>
+                    </div>
+
+                    {% for item in protocol_counts %}
+                        <div class="protocol-row">
+                            <span>{{ item.protocol }}</span>
+                            <strong>{{ item.count }}</strong>
+                        </div>
+                    {% else %}
+                        <p class="empty-state">
+                            No protocol data available yet.
+                        </p>
+                    {% endfor %}
+
+                </section>
+
+
+                <!-- ANALYSIS HISTORY -->
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Analysis History</h3>
+                            <p>Previously uploaded network captures</p>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Analysis Date</th>
+                                    <th>Packets</th>
+                                    <th>Alerts</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for analysis in analyses %}
+                                    <tr>
+                                        <td>{{ analysis.filename }}</td>
+                                        <td>{{ analysis.analyzed_at }}</td>
+                                        <td>{{ analysis.packet_count }}</td>
+                                        <td>{{ analysis.alert_count }}</td>
+                                        <td>
+                                            <a
+                                                href="{{ url_for('analysis_detail', analysis_id=analysis.id) }}"
+                                                class="view-button"
+                                            >
+                                                View Details →
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="empty-state">
+                                            No analysis history available.
+                                            Upload a PCAP file to get started.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </section>
+
+            {% endif %}
+
+
+            <!-- FOOTER -->
+            <footer class="footer">
+                <p>
+                    NIDS Lab © 2026 |
+                    Network Intrusion Detection System
+                </p>
+                <p>For educational and authorized network analysis use.</p>
+            </footer>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
